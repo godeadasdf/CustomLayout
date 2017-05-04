@@ -9,7 +9,15 @@ import android.view.ViewGroup;
 
 public class KLayout extends ViewGroup {
 
-    private final String TAG = "KLayout";
+    private final static String TAG = "KLayout";
+
+
+    private final static int HOVER_LEFT = 0x000001;
+    private final static int HOVER_RIGHT = 0x000002;
+    private final static int VERTI_UP = 0x000003;
+    private final static int VERTI_DOWN = 0x000004;
+
+    private View mTarget;
 
     public KLayout(Context context) {
         super(context);
@@ -96,8 +104,11 @@ public class KLayout extends ViewGroup {
         // 遍历所有子视图
         int childCount = getChildCount();
         for (int i = 0; i < childCount; i++) {
-            View childView = getChildAt(i);
 
+            View childView = getChildAt(i);
+            if (i == 0) {
+                mTarget = childView;
+            }
             // 获取在onMeasure中计算的视图尺寸
             int measureHeight = childView.getMeasuredHeight();
             int measuredWidth = childView.getMeasuredWidth();
@@ -116,32 +127,63 @@ public class KLayout extends ViewGroup {
         int action = ev.getAction();
         switch (action) {
             case MotionEvent.ACTION_DOWN:
+            case MotionEvent.ACTION_UP:
+            case MotionEvent.ACTION_CANCEL:
                 onTouchEvent(ev);
                 return false;
             case MotionEvent.ACTION_MOVE:
                 return true;
+
 
             default:
                 return false;
         }
     }
 
-    float xPre;
-    float yPre;
+    float preX;
+    float preY;
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
-        float x = event.getX();
-        float y = event.getY();
+        float currentX = event.getX();
+        float currentY = event.getY();
         int action = event.getActionMasked();
         switch (action) {
             case MotionEvent.ACTION_DOWN:
                 Log.d(TAG, "KLayout DOWN");
                 break;
             case MotionEvent.ACTION_MOVE:
-                Log.d(TAG, "KLayout MOVING");
+                if (judgeMoveSlide(preX, preY, currentX, currentY) == VERTI_DOWN ||
+                        judgeMoveSlide(preX, preY, currentX, currentY) == VERTI_UP) {
+                    Log.d(TAG, "KLayout MOVING VERTI");
+                    if (judgeMoveSlide(preX, preY, currentX, currentY) == VERTI_DOWN) {
+                        mTarget.offsetTopAndBottom((int) (currentY - preY));
+                    }
+                } else {
+                    Log.d(TAG, "KLayout MOVING HOVER");
+                }
+                break;
+            case MotionEvent.ACTION_UP:
+            case MotionEvent.ACTION_CANCEL:
+                Log.d(TAG, "KLayout UP OR CANCEL");
                 break;
         }
-        return false;
+        preX = currentX;
+        preY = currentY;
+        return true;
     }
+
+    private int judgeMoveSlide(float preX, float preY, float curX, float curY) {
+        if (Math.abs(preX - curX) > Math.abs(preY - curY)) {
+            return curX - preX > 0 ? HOVER_RIGHT : HOVER_LEFT;
+        } else {
+            return curY - preY > 0 ? VERTI_DOWN : VERTI_UP;
+        }
+    }
+
+/*        HOVER_RIGHT(1),
+                HOVER_LEFT(2),
+                VER_UP(3),
+                VER_DOWN(4)
+    */
 }
