@@ -1,11 +1,17 @@
 package kang.customlayout;
 
 import android.content.Context;
+import android.graphics.Point;
 import android.util.AttributeSet;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowManager;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class KLayout extends ViewGroup {
 
@@ -17,19 +23,38 @@ public class KLayout extends ViewGroup {
     private final static int VERTI_UP = 0x000003;
     private final static int VERTI_DOWN = 0x000004;
 
+    private List<Point> originPos;
+
     private View mTarget;
+
+    private View headerView;
 
     public KLayout(Context context) {
         super(context);
+        initHeaderView();
     }
 
     public KLayout(Context context, AttributeSet attrs) {
         super(context, attrs);
+        initHeaderView();
     }
 
     public KLayout(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
     }
+
+    public void setHeaderView(View view) {
+
+    }
+
+
+    private void initHeaderView() {
+        if (headerView == null) {
+            headerView = LayoutInflater.from(getContext()).inflate(R.layout.header_view, null, false);
+        }
+        addView(headerView);
+    }
+
 
     /**
      * 计算控件的大小
@@ -72,7 +97,11 @@ public class KLayout extends ViewGroup {
              */
             case MeasureSpec.AT_MOST:
             case MeasureSpec.EXACTLY:
-                result = widthSize;
+                if (widthSize == LayoutParams.MATCH_PARENT) {
+                    result = getScreenWidth();
+                } else {
+                    result = widthSize;
+                }
                 break;
         }
         return result;
@@ -87,7 +116,11 @@ public class KLayout extends ViewGroup {
         switch (heightMode) {
             case MeasureSpec.AT_MOST:
             case MeasureSpec.EXACTLY:
-                result = heightSize;
+                if (heightSize == LayoutParams.MATCH_PARENT) {
+                    result = getScreenWidth();
+                } else {
+                    result = heightSize;
+                }
                 break;
         }
         return result;
@@ -100,13 +133,14 @@ public class KLayout extends ViewGroup {
     @Override
     protected void onLayout(boolean changed, int l, int t, int r, int b) {
         // 记录总高度
-        int mTotalHeight = 0;
+        int mTotalHeight = 0 - headerView.getMeasuredHeight();
+        originPos = new ArrayList<>();
         // 遍历所有子视图
         int childCount = getChildCount();
         for (int i = 0; i < childCount; i++) {
 
             View childView = getChildAt(i);
-            if (i == 0) {
+            if (i == 1) {
                 mTarget = childView;
             }
             // 获取在onMeasure中计算的视图尺寸
@@ -116,6 +150,8 @@ public class KLayout extends ViewGroup {
             childView.layout(l, mTotalHeight, measuredWidth, mTotalHeight
                     + measureHeight);
 
+            Point point = new Point(l, mTotalHeight);
+            originPos.add(point);
             mTotalHeight += measureHeight;
 
         }
@@ -158,6 +194,9 @@ public class KLayout extends ViewGroup {
                     Log.d(TAG, "KLayout MOVING VERTI");
                     if (judgeMoveSlide(preX, preY, currentX, currentY) == VERTI_DOWN) {
                         mTarget.offsetTopAndBottom((int) (currentY - preY));
+                        headerView.offsetTopAndBottom((int) (currentY - preY));
+                        Log.d(TAG, "headview mtarget pos  x" + mTarget.getX() + "y   " + mTarget.getY());
+                        Log.d(TAG, "headview pos  x" + headerView.getX() + "  y " + headerView.getY());
                     }
                 } else {
                     Log.d(TAG, "KLayout MOVING HOVER");
@@ -166,6 +205,8 @@ public class KLayout extends ViewGroup {
             case MotionEvent.ACTION_UP:
             case MotionEvent.ACTION_CANCEL:
                 Log.d(TAG, "KLayout UP OR CANCEL");
+                headerView.offsetTopAndBottom(originPos.get(0).y - (int) headerView.getY());
+                mTarget.offsetTopAndBottom(originPos.get(1).y - (int) mTarget.getY());
                 break;
         }
         preX = currentX;
@@ -186,4 +227,12 @@ public class KLayout extends ViewGroup {
                 VER_UP(3),
                 VER_DOWN(4)
     */
+
+    private int getScreenWidth() {
+        WindowManager wm = (WindowManager) getContext()
+                .getSystemService(Context.WINDOW_SERVICE);
+
+        int width = wm.getDefaultDisplay().getWidth();
+        return width;
+    }
 }
