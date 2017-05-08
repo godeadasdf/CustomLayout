@@ -3,11 +3,14 @@ package kang.customlayout;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+
+import java.util.zip.Inflater;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -25,6 +28,8 @@ public class MainActivity extends AppCompatActivity {
         setContentView(kLayout);*/
 
         setContentView(R.layout.activity_main);
+        KLayout kLayout = (KLayout)findViewById(R.id.klayout);
+        kLayout.setHeaderView(LayoutInflater.from(this).inflate(R.layout.header_new,null,false));
         tv = (TextView) findViewById(R.id.tv);
         tv.setOnTouchListener(new View.OnTouchListener() {
             @Override

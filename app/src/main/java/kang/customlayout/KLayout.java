@@ -2,6 +2,7 @@ package kang.customlayout;
 
 import android.content.Context;
 import android.graphics.Point;
+import android.text.Layout;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -9,6 +10,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
+import android.widget.LinearLayout;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -43,16 +45,20 @@ public class KLayout extends ViewGroup {
         super(context, attrs, defStyle);
     }
 
-    public void setHeaderView(View view) {
-
-    }
-
-
     private void initHeaderView() {
         if (headerView == null) {
-            headerView = LayoutInflater.from(getContext()).inflate(R.layout.header_view, null, false);
+            headerView = LayoutInflater.from(getContext()).inflate(R.layout.header_view, this, false);
         }
         addView(headerView);
+    }
+
+    public void setHeaderView(View view) {
+        removeView(headerView);
+        headerView = view;
+        addView(headerView, 0);
+        //addview match_parent can not work
+        headerView.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
+        invalidate();
     }
 
 
@@ -66,6 +72,7 @@ public class KLayout extends ViewGroup {
         int measureHeight = measureHeight(heightMeasureSpec);
         // 计算自定义的ViewGroup中所有子控件的大小
         measureChildren(widthMeasureSpec, heightMeasureSpec);
+        /*measureViewChildren();*/
         // 设置自定义的控件MyViewGroup的大小
         setMeasuredDimension(measureWidth, measureHeight);
     }
